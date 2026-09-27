@@ -1,0 +1,61 @@
+services:
+  # ── API Server Web Service ────────────────────────────────────────────────────
+  - type: web
+    name: leadflow-api
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build --workspace=types && npm run build --workspace=server
+    startCommand: npm run start --workspace=server
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: MONGO_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        sync: false
+      - key: PLATFORM_ADMIN_EMAIL
+        value: admin@leadflow.app
+      - key: PLATFORM_ADMIN_PASSWORD
+        sync: false
+      - key: S3_BUCKET_NAME
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+
+  # ── Background Worker Service ─────────────────────────────────────────────────
+  - type: worker
+    name: leadflow-worker
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build --workspace=types && npm run build --workspace=worker
+    startCommand: npm run start --workspace=worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: S3_BUCKET_NAME
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false

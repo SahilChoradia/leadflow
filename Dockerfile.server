@@ -1,0 +1,33 @@
+# ── Production Dockerfile for LeadFlow API Server ───────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy root manifests and package workspaces
+COPY package*.json ./
+COPY tsconfig.base.json ./
+COPY types ./types
+COPY server ./server
+
+# Install dependencies and build shared types & server
+RUN npm install
+RUN npm run build --workspace=types
+RUN npm run build --workspace=server
+
+# Production runner stage
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=4000
+
+COPY package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/types/dist ./types/dist
+COPY --from=builder /app/types/package.json ./types/package.json
+COPY --from=builder /app/server/dist ./server/dist
+COPY --from=builder /app/server/package.json ./server/package.json
+
+EXPOSE 4000
+
+CMD ["node", "server/dist/index.js"]

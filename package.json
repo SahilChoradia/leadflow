@@ -1,0 +1,32 @@
+{
+  "name": "leadflow",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "worker",
+    "types"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:worker\" \"npm run dev:client\"",
+    "dev:server": "npm run dev --workspace=server",
+    "dev:worker": "npm run dev --workspace=worker",
+    "dev:client": "npm run dev --workspace=client",
+    "build": "npm run build --workspace=types && npm run build --workspace=server && npm run build --workspace=worker && npm run build --workspace=client",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "typecheck": "tsc --build"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5"
+  }
+}
