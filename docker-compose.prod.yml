@@ -60,6 +60,17 @@ services:
       redis:
         condition: service_healthy
 
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: leadflow-client
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    depends_on:
+      - server
+
 volumes:
   mongo_data:
   redis_data:
