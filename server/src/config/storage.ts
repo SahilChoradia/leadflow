@@ -56,7 +56,7 @@ export async function saveDocumentFile(options: SaveFileOptions): Promise<SaveFi
   const sizeBytes = buffer.length;
 
   if (s3Client && isS3Configured) {
-    const bucket = process.env.S3_BUCKET ?? 'leadflow-documents';
+    const bucket = process.env.S3_BUCKET ?? process.env.S3_BUCKET_NAME ?? 'leadflow-documents';
     await s3Client.send(
       new PutObjectCommand({
         Bucket: bucket,
@@ -81,7 +81,7 @@ export async function saveDocumentFile(options: SaveFileOptions): Promise<SaveFi
  */
 export async function getDocumentStream(s3Key: string): Promise<{ stream: Readable; contentType?: string }> {
   if (s3Client && isS3Configured) {
-    const bucket = process.env.S3_BUCKET ?? 'leadflow-documents';
+    const bucket = process.env.S3_BUCKET ?? process.env.S3_BUCKET_NAME ?? 'leadflow-documents';
     const command = new GetObjectCommand({
       Bucket: bucket,
       Key: s3Key,
@@ -111,7 +111,7 @@ export async function getDocumentStream(s3Key: string): Promise<{ stream: Readab
  */
 export async function getPresignedDownloadUrl(s3Key: string, expiresIn = 3600): Promise<string | null> {
   if (!s3Client || !isS3Configured) return null;
-  const bucket = process.env.S3_BUCKET ?? 'leadflow-documents';
+  const bucket = process.env.S3_BUCKET ?? process.env.S3_BUCKET_NAME ?? 'leadflow-documents';
   const command = new GetObjectCommand({
     Bucket: bucket,
     Key: s3Key,
