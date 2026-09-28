@@ -23,7 +23,7 @@ export const app = express();
 app.use(helmet());
 
 // ─── CORS — tighten origins in production via env var ───────────────────────
-const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173').split(',');
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? process.env.CLIENT_URL ?? 'http://localhost:5173').split(',');
 app.use(
   cors({
     origin: (origin, cb) => {
