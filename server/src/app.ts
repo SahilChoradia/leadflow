@@ -99,6 +99,6 @@ app.use((_req, res) => {
 // ─── Global async error handler ───────────────────────────────────────────────
 // Catches errors thrown from async controllers (express-async-errors pattern).
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('[app] Unhandled error:', err.message);
-  res.status(500).json({ success: false, error: 'Internal server error' });
+  console.error('[app] Unhandled error:', err.stack);
+  res.status(500).json({ success: false, error: err.message || 'Internal server error', stack: err.stack });
 });
