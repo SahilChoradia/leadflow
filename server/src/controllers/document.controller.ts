@@ -66,6 +66,7 @@ export async function uploadDocument(req: Request, res: Response): Promise<void>
   let clientId: string;
   let brokerageId = user.brokerageId;
 
+  let clientName = '';
   if (user.role === 'client') {
     const client = await Client.findOne({ userId: user.id, brokerageId: user.brokerageId });
     if (!client) {
@@ -73,6 +74,7 @@ export async function uploadDocument(req: Request, res: Response): Promise<void>
       return;
     }
     clientId = client._id.toString();
+    clientName = `${client.firstName} ${client.lastName}`;
     brokerageId = client.brokerageId.toString();
   } else {
     // Advisor or admin must supply clientId in body
@@ -87,12 +89,16 @@ export async function uploadDocument(req: Request, res: Response): Promise<void>
       return;
     }
     clientId = client._id.toString();
+    clientName = `${client.firstName} ${client.lastName}`;
   }
+
+  // Format file name: "Client Name-Document Name"
+  const formattedFileName = `${clientName}-${file.originalname}`.replace(/[^a-zA-Z0-9.-_ ]/g, '');
 
   // Save to storage (S3 or local storage fallback)
   const { s3Key, sizeBytes } = await saveDocumentFile({
     buffer:       file.buffer,
-    fileName:     file.originalname,
+    fileName:     formattedFileName,
     mimeType:     file.mimetype,
     brokerageId:  brokerageId!,
     clientId,
@@ -102,7 +108,7 @@ export async function uploadDocument(req: Request, res: Response): Promise<void>
   const document = await DocumentModel.create({
     brokerageId,
     clientId,
-    fileName:   file.originalname,
+    fileName:   formattedFileName,
     mimeType:   file.mimetype,
     sizeBytes,
     s3Key,
@@ -110,17 +116,7 @@ export async function uploadDocument(req: Request, res: Response): Promise<void>
     uploadedAt: new Date(),
   });
 
-  // Enqueue background verification job (BullMQ — decoupled and non-blocking)
-  const jobId = await enqueueDocumentVerification({
-    documentId:  document._id.toString(),
-    brokerageId: brokerageId!,
-    clientId,
-    fileName:    file.originalname,
-    s3Key,
-  });
-
-  document.verificationJobId = jobId;
-  await document.save();
+  // (Removed automated AI worker verification per request. Verification is now manual by admin.)
 
   const docDto = toDocumentDto(document);
 

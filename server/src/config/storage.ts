@@ -50,9 +50,8 @@ export interface SaveFileResult {
  */
 export async function saveDocumentFile(options: SaveFileOptions): Promise<SaveFileResult> {
   const { buffer, fileName, mimeType, brokerageId, clientId } = options;
-  const timestamp = Date.now();
   const safeName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-  const s3Key = `brokerages/${brokerageId}/clients/${clientId}/${timestamp}-${safeName}`;
+  const s3Key = `brokerages/${brokerageId}/clients/${clientId}/${safeName}`;
   const sizeBytes = buffer.length;
 
   if (s3Client && isS3Configured) {
@@ -69,13 +68,13 @@ export async function saveDocumentFile(options: SaveFileOptions): Promise<SaveFi
       console.info(`[storage] Uploaded to S3: ${s3Key} (${sizeBytes} bytes)`);
     } catch (err: any) {
       console.error('[storage] S3 upload failed, falling back to local storage:', err.message);
-      const localFilePath = path.join(UPLOADS_DIR, `${timestamp}-${safeName}`);
+      const localFilePath = path.join(UPLOADS_DIR, safeName);
       await fs.promises.writeFile(localFilePath, buffer);
       console.info(`[storage] Saved to local storage fallback: ${localFilePath} (${sizeBytes} bytes)`);
     }
   } else {
     // Local storage fallback
-    const localFilePath = path.join(UPLOADS_DIR, `${timestamp}-${safeName}`);
+    const localFilePath = path.join(UPLOADS_DIR, safeName);
     await fs.promises.writeFile(localFilePath, buffer);
     console.info(`[storage] Saved to local storage: ${localFilePath} (${sizeBytes} bytes)`);
   }

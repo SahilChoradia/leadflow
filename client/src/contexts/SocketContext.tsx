@@ -46,7 +46,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const socketUrl = import.meta.env.VITE_WS_URL || '/';
+    const socketUrl = import.meta.env.VITE_WS_URL || import.meta.env.VITE_SOCKET_URL || '/';
 
     const s: Socket = io(socketUrl, {
       path: '/socket.io',

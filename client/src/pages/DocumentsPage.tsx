@@ -141,6 +141,15 @@ export default function DocumentsPage() {
     }
   };
 
+  const handleVerifyDocument = async (docId: string, status: 'verified' | 'failed', failureReason?: string) => {
+    try {
+      await api.patch(`/documents/${docId}/status`, { status, failureReason });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    } catch (err: any) {
+      toastError('Failed to update document status', err.message);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden bg-surface-900">
       {/* ── Page Header ──────────────────────────────────────────────────────── */}
@@ -345,7 +354,26 @@ export default function DocumentsPage() {
                     </td>
 
                     {/* Actions */}
-                    <td className="py-4 px-5 text-right">
+                    <td className="py-4 px-5 text-right flex justify-end items-center gap-2">
+                      {doc.status === 'pending' && user?.role !== 'client' && (
+                        <>
+                          <button
+                            onClick={() => handleVerifyDocument(doc.id, 'verified')}
+                            className="px-2 py-1 text-xs rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                          >
+                            Verify
+                          </button>
+                          <button
+                            onClick={() => {
+                              const reason = prompt('Reason for rejection:');
+                              if (reason !== null) handleVerifyDocument(doc.id, 'failed', reason);
+                            }}
+                            className="px-2 py-1 text-xs rounded bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
                       <a
                         href={`/api/documents/${doc.id}/download`}
                         target="_blank"

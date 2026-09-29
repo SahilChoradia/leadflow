@@ -204,6 +204,15 @@ export default function ClientsPage() {
     }
   };
 
+  const handleVerifyDocument = async (docId: string, status: 'verified' | 'failed', failureReason?: string) => {
+    try {
+      await api.patch(`/documents/${docId}/status`, { status, failureReason });
+      queryClient.invalidateQueries({ queryKey: ['client-docs', selectedClient?.id] });
+    } catch (err: any) {
+      toastError('Failed to update document status', err.message);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden bg-surface-900">
       {/* Header */}
@@ -387,6 +396,25 @@ export default function ClientsPage() {
 
                   <div className="flex items-center gap-2 shrink-0">
                     {getStatusBadge(doc.status)}
+                    {doc.status === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => handleVerifyDocument(doc.id, 'verified')}
+                          className="px-2 py-1 text-xs rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                        >
+                          Verify
+                        </button>
+                        <button
+                          onClick={() => {
+                            const reason = prompt('Reason for rejection:');
+                            if (reason !== null) handleVerifyDocument(doc.id, 'failed', reason);
+                          }}
+                          className="px-2 py-1 text-xs rounded bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
                     <a
                       href={`/api/documents/${doc.id}/download`}
                       target="_blank"
