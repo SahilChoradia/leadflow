@@ -27,7 +27,7 @@ const DocumentSchema = new Schema<IDocument>(
     s3Key:             { type: String, required: true },
     status: {
       type: String,
-      enum: ['pending', 'checking', 'passed', 'failed'] as DocumentStatus[],
+      enum: ['pending', 'verified', 'failed'] as DocumentStatus[],
       default: 'pending',
     },
     verificationJobId: { type: String },

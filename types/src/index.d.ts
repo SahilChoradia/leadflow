@@ -1,6 +1,6 @@
 export type UserRole = 'platform_admin' | 'brokerage_admin' | 'advisor' | 'client';
 export type PipelineStage = 'new' | 'contacted' | 'qualified' | 'won' | 'lost';
-export type DocumentStatus = 'pending' | 'checking' | 'passed' | 'failed';
+export type DocumentStatus = 'pending' | 'verified' | 'failed';
 export interface JwtPayload {
     sub: string;
     role: UserRole;

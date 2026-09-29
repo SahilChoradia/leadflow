@@ -87,8 +87,8 @@ export default function ClientPortalPage() {
       queryClient.setQueryData<DocumentDto[]>(['client-documents'], (prev = []) =>
         prev.map((d) => (d.id === payload.id ? { ...d, status: payload.status } : d))
       );
-      if (payload.status === 'passed') {
-        success('Document verified', `${payload.fileName || 'Your document'} has passed verification!`);
+      if (payload.status === 'verified') {
+        success('Document verified', `${payload.fileName || 'Your document'} has been verified!`);
       } else if (payload.status === 'failed') {
         toastError('Verification issue', `${payload.fileName || 'Your document'} requires attention.`);
       }
@@ -157,16 +157,10 @@ export default function ClientPortalPage() {
 
   const getStatusBadge = (status: DocumentStatus) => {
     switch (status) {
-      case 'passed':
+      case 'verified':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
             <CheckCircle2 size={13} /> Verified
-          </span>
-        );
-      case 'checking':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-sky-500/15 text-sky-400 border border-sky-500/30">
-            <RefreshCw size={13} className="animate-spin" /> Verifying...
           </span>
         );
       case 'failed':

@@ -87,7 +87,7 @@ export default function DocumentsPage() {
 
   // ── Metrics ─────────────────────────────────────────────────────────────────
   const totalCount = documents.length;
-  const verifiedCount = documents.filter((d) => d.status === 'passed').length;
+  const verifiedCount = documents.filter((d) => d.status === 'verified').length;
   const pendingCount = documents.filter((d) => d.status === 'pending' || d.status === 'checking').length;
   const failedCount = documents.filter((d) => d.status === 'failed').length;
 
@@ -96,8 +96,8 @@ export default function DocumentsPage() {
     const matchesStatus =
       statusFilter === 'all'
         ? true
-        : statusFilter === 'passed'
-        ? doc.status === 'passed'
+        : statusFilter === 'verified'
+        ? doc.status === 'verified'
         : statusFilter === 'pending'
         ? doc.status === 'pending' || doc.status === 'checking'
         : doc.status === statusFilter;
@@ -114,7 +114,7 @@ export default function DocumentsPage() {
 
   const getStatusBadge = (status: DocumentStatus) => {
     switch (status) {
-      case 'passed':
+      case 'verified':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_10px_rgba(52,211,153,0.1)]">
             <CheckCircle2 size={12} />
@@ -226,7 +226,7 @@ export default function DocumentsPage() {
           {(
             [
               { key: 'all', label: 'All Files', count: totalCount },
-              { key: 'passed', label: 'Verified', count: verifiedCount },
+              { key: 'verified', label: 'Verified', count: verifiedCount },
               { key: 'pending', label: 'Pending', count: pendingCount },
               { key: 'failed', label: 'Failed', count: failedCount },
             ] as const

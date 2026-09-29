@@ -144,16 +144,10 @@ export default function ClientsPage() {
 
   const getStatusBadge = (status: DocumentStatus) => {
     switch (status) {
-      case 'passed':
+      case 'verified':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-emerald-500/15 text-emerald-400">
             <CheckCircle2 size={12} /> Verified
-          </span>
-        );
-      case 'checking':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-sky-500/15 text-sky-400">
-            <RefreshCw size={12} className="animate-spin" /> Checking
           </span>
         );
       case 'failed':
