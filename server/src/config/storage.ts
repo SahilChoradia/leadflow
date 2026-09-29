@@ -57,15 +57,22 @@ export async function saveDocumentFile(options: SaveFileOptions): Promise<SaveFi
 
   if (s3Client && isS3Configured) {
     const bucket = process.env.S3_BUCKET ?? process.env.S3_BUCKET_NAME ?? 'leadflow-documents';
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: s3Key,
-        Body: buffer,
-        ContentType: mimeType,
-      })
-    );
-    console.info(`[storage] Uploaded to S3: ${s3Key} (${sizeBytes} bytes)`);
+    try {
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: s3Key,
+          Body: buffer,
+          ContentType: mimeType,
+        })
+      );
+      console.info(`[storage] Uploaded to S3: ${s3Key} (${sizeBytes} bytes)`);
+    } catch (err: any) {
+      console.error('[storage] S3 upload failed, falling back to local storage:', err.message);
+      const localFilePath = path.join(UPLOADS_DIR, `${timestamp}-${safeName}`);
+      await fs.promises.writeFile(localFilePath, buffer);
+      console.info(`[storage] Saved to local storage fallback: ${localFilePath} (${sizeBytes} bytes)`);
+    }
   } else {
     // Local storage fallback
     const localFilePath = path.join(UPLOADS_DIR, `${timestamp}-${safeName}`);
