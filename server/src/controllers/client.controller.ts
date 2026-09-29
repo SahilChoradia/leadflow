@@ -12,7 +12,7 @@ function toClientDto(client: IClient): ClientDto {
     id:                client._id.toString(),
     brokerageId:       client.brokerageId.toString(),
     userId:            client.userId.toString(),
-    leadId:            client.leadId.toString(),
+    leadId:            client.leadId?.toString() ?? '',
     firstName:         client.firstName,
     lastName:          client.lastName,
     email:             client.email,
