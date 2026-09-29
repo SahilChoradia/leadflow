@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useSocket } from '../contexts/SocketContext';
 import { EmptyState } from '../components/ui/EmptyState';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../components/ui/Toast';
 import { cn } from '../lib/utils';
 import {
   FileText,
@@ -55,6 +57,8 @@ function getFileIcon(mimeType: string) {
 export default function DocumentsPage() {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
+  const { user } = useAuth();
+  const { error: toastError } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | DocumentStatus>('all');

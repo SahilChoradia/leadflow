@@ -26,6 +26,10 @@ async function startWorker() {
     {
       connection: redisConnection,
       concurrency: CONCURRENCY,
+      settings: {
+        stalledInterval: 300000, // 5 minutes (default is 30s)
+        drainDelay: 10,
+      }
     }
   );
 
@@ -48,7 +52,14 @@ async function startWorker() {
       console.info(`[worker] Processing job ${job.id} on queue "health-check"`, job.data);
       return { processed: true };
     },
-    { connection: redisConnection, concurrency: 1 }
+    { 
+      connection: redisConnection, 
+      concurrency: 1,
+      settings: {
+        stalledInterval: 300000,
+        drainDelay: 10,
+      }
+    }
   );
 
   console.info('[worker] LeadFlow background worker process running — listening for jobs...');
