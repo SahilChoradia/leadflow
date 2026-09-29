@@ -216,3 +216,52 @@ export async function downloadDocument(req: Request, res: Response): Promise<voi
     res.status(404).json({ success: false, error: err.message ?? 'File not found' });
   }
 }
+
+/**
+ * Manually update document verification status (admin/advisor only).
+ * PATCH /api/documents/:id/status
+ */
+export async function updateDocumentStatus(req: Request, res: Response): Promise<void> {
+  const user = req.user!;
+
+  if (user.role === 'client') {
+    res.status(403).json({ success: false, error: 'Clients cannot modify document status' });
+    return;
+  }
+
+  const { status, failureReason } = req.body;
+
+  if (!status || !['verified', 'failed', 'pending'].includes(status)) {
+    res.status(400).json({ success: false, error: 'Invalid status. Must be: verified, failed, or pending' });
+    return;
+  }
+
+  // platform_admin can access any doc; others are scoped to their brokerage
+  const filter: Record<string, unknown> = { _id: req.params.id };
+  if (user.role !== 'platform_admin') {
+    filter['brokerageId'] = user.brokerageId;
+  }
+
+  const doc = await DocumentModel.findOne(filter);
+  if (!doc) {
+    res.status(404).json({ success: false, error: 'Document not found' });
+    return;
+  }
+
+  doc.status = status;
+  if (failureReason) doc.failureReason = failureReason;
+  if (status === 'verified') doc.verifiedAt = new Date();
+  if (status !== 'failed') doc.failureReason = undefined;
+  await doc.save();
+
+  const brokerageId = doc.brokerageId.toString();
+  emitToBrokerage(brokerageId, 'doc:status', {
+    id:        doc._id.toString(),
+    clientId:  doc.clientId.toString(),
+    status:    doc.status,
+    fileName:  doc.fileName,
+    failureReason: doc.failureReason,
+  });
+
+  res.json({ success: true, data: toDocumentDto(doc) });
+}
