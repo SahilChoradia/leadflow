@@ -26,10 +26,8 @@ async function startWorker() {
     {
       connection: redisConnection,
       concurrency: CONCURRENCY,
-      settings: {
-        stalledInterval: 300000, // 5 minutes (default is 30s)
-        drainDelay: 10,
-      }
+      stalledInterval: 300000, // 5 minutes (default is 30s)
+      drainDelay: 10,
     }
   );
 
@@ -55,10 +53,8 @@ async function startWorker() {
     { 
       connection: redisConnection, 
       concurrency: 1,
-      settings: {
-        stalledInterval: 300000,
-        drainDelay: 10,
-      }
+      stalledInterval: 300000,
+      drainDelay: 10,
     }
   );
 

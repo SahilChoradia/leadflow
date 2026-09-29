@@ -53,10 +53,8 @@ export const emailWorker = new Worker(
   {
     connection: redisConnection,
     concurrency: 5,
-    settings: {
-      stalledInterval: 300000,
-      drainDelay: 10,
-    }
+    stalledInterval: 300000,
+    drainDelay: 10,
   }
 );
 

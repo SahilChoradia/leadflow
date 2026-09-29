@@ -4,11 +4,17 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable } from 'stream';
 
-const UPLOADS_DIR = path.resolve(process.cwd(), 'uploads', 'documents');
+import os from 'os';
 
-// Ensure local uploads directory exists
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+const UPLOADS_DIR = path.join(os.tmpdir(), 'leadflow', 'uploads', 'documents');
+
+// Ensure local uploads directory exists (use try-catch for read-only environments like Vercel)
+try {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn('[storage] Warning: Could not create local uploads directory (read-only filesystem?)', err);
 }
 
 // Check if real S3 credentials are configured
