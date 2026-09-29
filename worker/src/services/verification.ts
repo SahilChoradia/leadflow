@@ -42,7 +42,7 @@ export async function simulateDocumentVerification(fileName: string): Promise<Ve
 
   if (passes) {
     return {
-      status: 'passed',
+      status: 'verified',
       verifiedAt: new Date(),
       processingTimeMs: Date.now() - startTime,
     };

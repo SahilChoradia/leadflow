@@ -61,26 +61,17 @@ export async function processDocumentVerification(job: Job<DocumentJobData>): Pr
     return { status: 'not_found', documentId };
   }
 
-  // If already verified and passed, do not re-verify (idempotent guard)
-  if (doc.status === 'passed') {
-    console.info(`[worker] Document ${documentId} is already passed — skipping redundant check.`);
-    return { status: 'passed', documentId };
+  // If already verified, do not re-verify (idempotent guard)
+  if (doc.status === 'verified') {
+    console.info(`[worker] Document ${documentId} is already verified — skipping redundant check.`);
+    return { status: 'verified', documentId };
   }
 
-  // 2. Transition status to 'checking' in MongoDB
+  // 2. Keep status as 'pending' during processing (no intermediate 'checking' state)
   await DocumentModel.updateOne(
     { _id: documentId },
-    { $set: { status: 'checking', verificationJobId: job.id } }
+    { $set: { verificationJobId: job.id } }
   );
-
-  // Notify real-time layer: document is now being checked
-  await publishStatusUpdate({
-    brokerageId,
-    id: documentId,
-    clientId,
-    status: 'checking',
-    fileName,
-  });
 
   // 3. Perform simulated verification
   const outcome = await simulateDocumentVerification(fileName);
