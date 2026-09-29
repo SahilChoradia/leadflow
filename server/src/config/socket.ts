@@ -36,7 +36,12 @@ export function emitToUser(userId: string, event: string, payload: unknown): voi
 }
 
 export function initSocketIO(httpServer: HttpServer): SocketIOServer {
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173').split(',');
+  const allowedOrigins = [
+    process.env.CLIENT_URL,
+    process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, '') : null,
+    ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
+    'http://localhost:5173',
+  ].filter(Boolean) as string[];
 
   io = new SocketIOServer(httpServer, {
     cors: {
