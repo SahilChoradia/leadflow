@@ -35,7 +35,7 @@ services:
       - key: S3_ENDPOINT
         sync: false
       - key: SMTP_ENABLED
-        sync: false
+        value: "true"
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
