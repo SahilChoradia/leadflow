@@ -148,7 +148,7 @@ export default function DocumentsPage() {
   const handleVerifyDocument = async (docId: string, status: 'verified' | 'failed', failureReason?: string) => {
     try {
       await api.patch(`/documents/${docId}/status`, { status, failureReason });
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['all-documents'] });
     } catch (err: any) {
       toastError('Failed to update document status', err.message);
     }
