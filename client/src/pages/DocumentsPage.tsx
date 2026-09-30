@@ -88,7 +88,7 @@ export default function DocumentsPage() {
   // ── Metrics ─────────────────────────────────────────────────────────────────
   const totalCount = documents.length;
   const verifiedCount = documents.filter((d) => d.status === 'verified').length;
-  const pendingCount = documents.filter((d) => d.status === 'pending' || d.status === 'checking').length;
+  const pendingCount = documents.filter((d) => d.status === 'pending').length;
   const failedCount = documents.filter((d) => d.status === 'failed').length;
 
   // ── Filtering ───────────────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ export default function DocumentsPage() {
         : statusFilter === 'verified'
         ? doc.status === 'verified'
         : statusFilter === 'pending'
-        ? doc.status === 'pending' || doc.status === 'checking'
+        ? doc.status === 'pending'
         : doc.status === statusFilter;
 
     const searchLower = searchTerm.toLowerCase().trim();
@@ -121,13 +121,7 @@ export default function DocumentsPage() {
             Verified
           </span>
         );
-      case 'checking':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
-            <RefreshCw size={12} className="animate-spin text-sky-400" />
-            Analyzing
-          </span>
-        );
+
       case 'failed':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
