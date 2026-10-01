@@ -110,6 +110,7 @@ export class ProductionEmailService {
     if (resendApiKey) {
       try {
         console.info(`[EmailService] Attempting delivery via Resend HTTPS API to ${to}`);
+        const resendSender = cleanEnv(process.env.RESEND_FROM) || (defaultFrom.includes('@gmail.com') ? 'onboarding@resend.dev' : defaultFrom);
         const response = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -117,7 +118,7 @@ export class ProductionEmailService {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: `${fromName} <${defaultFrom}>`,
+            from: `${fromName} <${resendSender}>`,
             to: [to],
             subject,
             html,
