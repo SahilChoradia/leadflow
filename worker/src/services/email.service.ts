@@ -64,7 +64,46 @@ export class ProductionEmailService {
     const defaultFrom = cleanEnv(process.env.SMTP_FROM) || cleanEnv(process.env.SMTP_USER) || 'ninjagaming1607@gmail.com';
     const errors: string[] = [];
 
-    // ─── Strategy 1: Brevo HTTPS REST API (Port 443) ───────────────────────────
+    // ─── Strategy 1: Resend HTTPS REST API (Port 443 - Recommended) ───────────
+    const resendApiKey = cleanEnv(process.env.RESEND_API_KEY) || 
+      (cleanEnv(process.env.SMTP_PASS)?.startsWith('re_') ? cleanEnv(process.env.SMTP_PASS) : undefined);
+
+    if (resendApiKey) {
+      try {
+        const resendSender = cleanEnv(process.env.RESEND_FROM) || 'onboarding@resend.dev';
+        console.info(`[EmailService] Attempting delivery via Resend HTTPS API (from: ${resendSender}) to ${to}`);
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: `${fromName} <${resendSender}>`,
+            to: [to],
+            subject,
+            html,
+          }),
+        });
+
+        if (response.ok) {
+          const data = (await response.json()) as { id?: string };
+          console.info(`[EmailService] Delivered successfully via Resend HTTPS API. ID: ${data.id ?? 'ok'}`);
+          return { success: true, provider: 'resend-api', messageId: data.id };
+        }
+
+        const errText = await response.text();
+        const msg = `Resend HTTPS API HTTP ${response.status}: ${errText}`;
+        console.warn(`[EmailService] ${msg}`);
+        errors.push(msg);
+      } catch (err: any) {
+        const msg = `Resend HTTPS API network failure: ${err.message ?? err}`;
+        console.warn(`[EmailService] ${msg}`);
+        errors.push(msg);
+      }
+    }
+
+    // ─── Strategy 2: Brevo HTTPS REST API (Port 443) ───────────────────────────
     const brevoApiKey = cleanEnv(process.env.BREVO_API_KEY) || 
       (cleanEnv(process.env.SMTP_PASS)?.startsWith('xkeysib-') ? cleanEnv(process.env.SMTP_PASS) : undefined);
 
@@ -98,45 +137,6 @@ export class ProductionEmailService {
         errors.push(msg);
       } catch (err: any) {
         const msg = `Brevo HTTPS API network failure: ${err.message ?? err}`;
-        console.warn(`[EmailService] ${msg}`);
-        errors.push(msg);
-      }
-    }
-
-    // ─── Strategy 2: Resend HTTPS REST API (Port 443) ──────────────────────────
-    const resendApiKey = cleanEnv(process.env.RESEND_API_KEY) || 
-      (cleanEnv(process.env.SMTP_PASS)?.startsWith('re_') ? cleanEnv(process.env.SMTP_PASS) : undefined);
-
-    if (resendApiKey) {
-      try {
-        console.info(`[EmailService] Attempting delivery via Resend HTTPS API to ${to}`);
-        const resendSender = cleanEnv(process.env.RESEND_FROM) || (defaultFrom.includes('@gmail.com') ? 'onboarding@resend.dev' : defaultFrom);
-        const response = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: `${fromName} <${resendSender}>`,
-            to: [to],
-            subject,
-            html,
-          }),
-        });
-
-        if (response.ok) {
-          const data = (await response.json()) as { id?: string };
-          console.info(`[EmailService] Delivered successfully via Resend HTTPS API. ID: ${data.id ?? 'ok'}`);
-          return { success: true, provider: 'resend-api', messageId: data.id };
-        }
-
-        const errText = await response.text();
-        const msg = `Resend HTTPS API HTTP ${response.status}: ${errText}`;
-        console.warn(`[EmailService] ${msg}`);
-        errors.push(msg);
-      } catch (err: any) {
-        const msg = `Resend HTTPS API network failure: ${err.message ?? err}`;
         console.warn(`[EmailService] ${msg}`);
         errors.push(msg);
       }
