@@ -40,19 +40,18 @@ export const emailWorker = new Worker(
       return;
     }
 
-    const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER;
-    // Brevo REST API requires an API key (from 'API keys & MCP' tab, starts with xkeysib-), not an SMTP key (xsmtpsib-)
-    const apiKey = process.env.BREVO_API_KEY || (process.env.SMTP_PASS?.startsWith('xkeysib-') ? process.env.SMTP_PASS : undefined);
+    const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || 'ninjagaming1607@gmail.com';
 
-    // 1. Send via Brevo HTTPS REST API (Port 443) if a valid Brevo API key is provided
-    if (apiKey) {
+    // 1. Send via Brevo HTTPS REST API (Port 443) if BREVO_API_KEY is provided or SMTP_PASS starts with xkeysib-
+    const brevoApiKey = process.env.BREVO_API_KEY || (process.env.SMTP_PASS?.startsWith('xkeysib-') ? process.env.SMTP_PASS : undefined);
+    if (brevoApiKey) {
       try {
         console.info(`[worker:email] Sending via Brevo HTTPS REST API (Port 443) to ${to}`);
         const apiRes = await fetch('https://api.brevo.com/v3/smtp/email', {
           method: 'POST',
           headers: {
             'accept': 'application/json',
-            'api-key': apiKey,
+            'api-key': brevoApiKey,
             'content-type': 'application/json',
           },
           body: JSON.stringify({
@@ -65,19 +64,52 @@ export const emailWorker = new Worker(
 
         if (apiRes.ok) {
           const resData = await apiRes.json() as { messageId?: string };
-          console.info(`[worker:email] Email sent successfully via HTTPS API to ${to}. MessageId: ${resData.messageId ?? 'ok'}`);
+          console.info(`[worker:email] Email sent successfully via Brevo HTTPS API to ${to}. MessageId: ${resData.messageId ?? 'ok'}`);
           return;
         }
 
         const errorText = await apiRes.text();
-        console.warn(`[worker:email] Brevo HTTPS API returned HTTP ${apiRes.status}: ${errorText}. Falling back to Nodemailer SMTP...`);
+        console.error(`[worker:email] Brevo HTTPS API error (HTTP ${apiRes.status}): ${errorText}`);
       } catch (httpErr) {
-        console.warn(`[worker:email] Brevo HTTPS API request failed:`, httpErr, `. Falling back to Nodemailer SMTP...`);
+        console.error(`[worker:email] Brevo HTTPS API request failed:`, httpErr);
       }
     }
 
-    // 2. Fallback / Standard Nodemailer SMTP
+    // 2. Send via Resend HTTPS REST API (Port 443) if RESEND_API_KEY is provided or SMTP_PASS starts with re_
+    const resendApiKey = process.env.RESEND_API_KEY || (process.env.SMTP_PASS?.startsWith('re_') ? process.env.SMTP_PASS : undefined);
+    if (resendApiKey) {
+      try {
+        console.info(`[worker:email] Sending via Resend HTTPS API (Port 443) to ${to}`);
+        const apiRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: `LeadFlow <${fromAddress}>`,
+            to: [to],
+            subject,
+            html,
+          }),
+        });
+
+        if (apiRes.ok) {
+          const resData = await apiRes.json() as { id?: string };
+          console.info(`[worker:email] Email sent successfully via Resend HTTPS API to ${to}. ID: ${resData.id ?? 'ok'}`);
+          return;
+        }
+
+        const errorText = await apiRes.text();
+        console.error(`[worker:email] Resend HTTPS API error (HTTP ${apiRes.status}): ${errorText}`);
+      } catch (httpErr) {
+        console.error(`[worker:email] Resend HTTPS API request failed:`, httpErr);
+      }
+    }
+
+    // 3. Fallback / Standard Nodemailer SMTP
     try {
+      console.info(`[worker:email] Attempting Nodemailer SMTP to ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}...`);
       const info = await transporter.sendMail({
         from: `"LeadFlow Automation" <${fromAddress}>`,
         to,
@@ -86,7 +118,7 @@ export const emailWorker = new Worker(
       });
       console.info(`[worker:email] Email sent successfully via SMTP to ${to}. MessageId: ${info.messageId}`);
     } catch (err) {
-      console.error(`[worker:email] Failed to send email to ${to}:`, err);
+      console.error(`[worker:email] Failed to send email to ${to} via SMTP:`, err);
       throw err; // Re-throw to let BullMQ retry or mark as failed
     }
   },
