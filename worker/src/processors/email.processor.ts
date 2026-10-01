@@ -41,10 +41,11 @@ export const emailWorker = new Worker(
     }
 
     const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER;
-    const apiKey = process.env.BREVO_API_KEY || (process.env.SMTP_PASS?.startsWith('xsmtpsib-') ? process.env.SMTP_PASS : undefined);
+    // Brevo REST API requires an API key (from 'API keys & MCP' tab, starts with xkeysib-), not an SMTP key (xsmtpsib-)
+    const apiKey = process.env.BREVO_API_KEY || (process.env.SMTP_PASS?.startsWith('xkeysib-') ? process.env.SMTP_PASS : undefined);
 
-    // 1. Permanent Fix: If Brevo API key is available or Brevo SMTP is configured, send via HTTPS REST API (Port 443)
-    if (apiKey && (process.env.SMTP_HOST?.includes('brevo') || process.env.BREVO_API_KEY)) {
+    // 1. Send via Brevo HTTPS REST API (Port 443) if a valid Brevo API key is provided
+    if (apiKey) {
       try {
         console.info(`[worker:email] Sending via Brevo HTTPS REST API (Port 443) to ${to}`);
         const apiRes = await fetch('https://api.brevo.com/v3/smtp/email', {
