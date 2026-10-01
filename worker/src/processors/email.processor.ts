@@ -14,6 +14,9 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
 });
 
 export interface EmailJobData {
@@ -37,14 +40,50 @@ export const emailWorker = new Worker(
       return;
     }
 
+    const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER;
+    const apiKey = process.env.BREVO_API_KEY || (process.env.SMTP_PASS?.startsWith('xsmtpsib-') ? process.env.SMTP_PASS : undefined);
+
+    // 1. Permanent Fix: If Brevo API key is available or Brevo SMTP is configured, send via HTTPS REST API (Port 443)
+    if (apiKey && (process.env.SMTP_HOST?.includes('brevo') || process.env.BREVO_API_KEY)) {
+      try {
+        console.info(`[worker:email] Sending via Brevo HTTPS REST API (Port 443) to ${to}`);
+        const apiRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'api-key': apiKey,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            sender: { name: 'LeadFlow Automation', email: fromAddress },
+            to: [{ email: to }],
+            subject,
+            htmlContent: html,
+          }),
+        });
+
+        if (apiRes.ok) {
+          const resData = await apiRes.json() as { messageId?: string };
+          console.info(`[worker:email] Email sent successfully via HTTPS API to ${to}. MessageId: ${resData.messageId ?? 'ok'}`);
+          return;
+        }
+
+        const errorText = await apiRes.text();
+        console.warn(`[worker:email] Brevo HTTPS API returned HTTP ${apiRes.status}: ${errorText}. Falling back to Nodemailer SMTP...`);
+      } catch (httpErr) {
+        console.warn(`[worker:email] Brevo HTTPS API request failed:`, httpErr, `. Falling back to Nodemailer SMTP...`);
+      }
+    }
+
+    // 2. Fallback / Standard Nodemailer SMTP
     try {
       const info = await transporter.sendMail({
-        from: `"LeadFlow Automation" <${process.env.SMTP_USER}>`,
+        from: `"LeadFlow Automation" <${fromAddress}>`,
         to,
         subject,
         html,
       });
-      console.info(`[worker:email] Email sent successfully to ${to}. MessageId: ${info.messageId}`);
+      console.info(`[worker:email] Email sent successfully via SMTP to ${to}. MessageId: ${info.messageId}`);
     } catch (err) {
       console.error(`[worker:email] Failed to send email to ${to}:`, err);
       throw err; // Re-throw to let BullMQ retry or mark as failed
