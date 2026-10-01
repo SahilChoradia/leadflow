@@ -129,10 +129,25 @@ export async function convertLeadToClient(req: Request, res: Response): Promise<
 export async function getCurrentClient(req: Request, res: Response): Promise<void> {
   const userId = req.user!.id;
   const brokerageId = req.user!.brokerageId;
-  const client = await Client.findOne({ userId, brokerageId }).populate('assignedAdvisorId', 'name email phone');
+  let client = await Client.findOne({ userId }).populate('assignedAdvisorId', 'name email phone');
 
   if (!client) {
-    res.status(404).json({ success: false, error: 'Client profile not found for this user' });
+    const userObj = await User.findById(userId);
+    res.json({
+      success: true,
+      data: {
+        id: userId,
+        brokerageId: brokerageId ?? '',
+        userId,
+        leadId: '',
+        firstName: userObj?.name?.split(' ')[0] ?? 'Client',
+        lastName: userObj?.name?.split(' ').slice(1).join(' ') ?? '',
+        email: userObj?.email ?? '',
+        phone: '',
+        caseStatus: 'active',
+        createdAt: new Date().toISOString(),
+      },
+    });
     return;
   }
 

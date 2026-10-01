@@ -95,15 +95,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Demo credentials hint */}
-        <div className="mt-4 p-3 rounded-xl border border-white/6 bg-surface-800/50">
-          <p className="text-xs text-slate-500 text-center mb-2 font-medium">Demo accounts</p>
-          <div className="space-y-1 text-xs text-slate-500">
-            <p><span className="text-slate-400">Admin:</span> admin@leadflow.app / ChangeMe123!</p>
-            <p><span className="text-slate-400">Broker admin:</span> admin@alpha-mortgage.demo / Demo1234!</p>
-            <p><span className="text-slate-400">Advisor:</span> advisor@alpha-mortgage.demo / Demo1234!</p>
-          </div>
-        </div>
+
       </div>
     </div>
   );

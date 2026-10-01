@@ -12,14 +12,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Global 401 handler — clear token and redirect to login
+// Global 401 handler — clear token and redirect to login (skip during login request itself)
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const isLoginReq = err.config?.url?.includes('/auth/login');
+    if (err.response?.status === 401 && !isLoginReq) {
       localStorage.removeItem('lf_token');
       localStorage.removeItem('lf_user');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(err);
   },
