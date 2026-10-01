@@ -5,6 +5,7 @@ import path from 'path';
 import { User } from '../models/User';
 import { Brokerage } from '../models/Brokerage';
 import { Client } from '../models/Client';
+import { Lead } from '../models/Lead';
 
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
@@ -94,11 +95,26 @@ async function createDemoUsers() {
   }
 
   // Ensure Client Profile Exists
-  let clientProfile = await Client.findOne({ email: 'client@leadflow.app' });
+  let clientProfile = await Client.findOne({ email: 'client@leadflow.app', brokerageId: brokerage._id });
   if (!clientProfile) {
+    let dummyLead = await Lead.findOne({ email: 'client@leadflow.app', brokerageId: brokerage._id });
+    if (!dummyLead) {
+      dummyLead = await Lead.create({
+        brokerageId: brokerage._id,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'client@leadflow.app',
+        phone: '+15551234567',
+        stage: 'won',
+        source: 'manual',
+        version: 1,
+      });
+    }
+
     await Client.create({
       brokerageId: brokerage._id,
       userId: clientUser._id,
+      leadId: dummyLead._id,
       email: 'client@leadflow.app',
       firstName: 'John',
       lastName: 'Doe',
